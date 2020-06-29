@@ -19,6 +19,9 @@ export class ApiGatewayStack extends cdk.Stack {
         stageName: 'dev',
         metricsEnabled: true,
         loggingLevel: apigw.MethodLoggingLevel.ERROR,
+        variables: {
+          lambdaAlias: props.alias.aliasName,
+        }
       },
       endpointConfiguration: {
         types: [apigw.EndpointType.REGIONAL],
@@ -34,6 +37,17 @@ export class ApiGatewayStack extends cdk.Stack {
       ]
     });
 
+    const resourceOptions: apigw.MethodOptions = {
+      methodResponses: [
+        {
+          statusCode: '200',
+          responseModels: {
+            'application/json': apigw.Model.EMPTY_MODEL,
+          },
+        }
+      ],
+    };
+
     this.api.root.addMethod('GET', new apigw.LambdaIntegration(props.alias, {
       proxy: false,
       credentialsRole,
@@ -44,7 +58,7 @@ export class ApiGatewayStack extends cdk.Stack {
       integrationResponses: [
         { statusCode: '200', }
       ],
-    }));
+    }), resourceOptions);
  
   }
 
