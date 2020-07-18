@@ -9,14 +9,16 @@ export class LambdaStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const lambdaExecutionRole = new iam.Role(this, 'LambdaExecutionRole', {
+    const ns = scope.node.tryGetContext('ns') || '';
+
+    const lambdaExecutionRole = new iam.Role(this, `${ns}LambdaExecutionRole`, {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         { managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' },
       ],
     });
 
-    const helloFunction = new lambda.Function(this, 'HelloFunction', {
+    const helloFunction = new lambda.Function(this, `${ns}HelloFunction`, {
       runtime: lambda.Runtime.PYTHON_3_7,
       code: lambda.Code.fromAsset(path.resolve(__dirname, './functions')),
       handler: 'hello.handler',
@@ -24,12 +26,14 @@ export class LambdaStack extends cdk.Stack {
       environment: {
         'campaign_arn': 'v1_campaign_arn'
       },
+      currentVersionOptions: {
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+      },
     });
-    const version = helloFunction.addVersion('V1');
 
     this.alias = new lambda.Alias(this, 'Alias', {
       aliasName: 'live',
-      version,
+      version: helloFunction.currentVersion,
     });
  }
 

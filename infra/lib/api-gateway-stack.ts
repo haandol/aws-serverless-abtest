@@ -13,7 +13,9 @@ export class ApiGatewayStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props: Props) {
     super(scope, id, props);
 
-    this.api = new apigw.RestApi(this, `RestApi`, {
+    const ns = scope.node.tryGetContext('ns') || '';
+
+    this.api = new apigw.RestApi(this, `${ns}RestApi`, {
       deploy: true,
       deployOptions: {
         stageName: 'dev',
@@ -29,7 +31,7 @@ export class ApiGatewayStack extends cdk.Stack {
     });
     this.api.root.addMethod('ANY');
 
-    const credentialsRole = new iam.Role(this, 'ApigwCredentialRole', {
+    const credentialsRole = new iam.Role(this, `${ns}ApigwCredentialRole`, {
       assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
       managedPolicies: [
         { managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs' },
@@ -56,7 +58,7 @@ export class ApiGatewayStack extends cdk.Stack {
         'application/json': `$input.json('$')`,
       },
       integrationResponses: [
-        { statusCode: '200', }
+        { statusCode: '200' }
       ],
     }), resourceOptions);
  
